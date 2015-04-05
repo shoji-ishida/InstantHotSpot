@@ -2,6 +2,7 @@ package jp.nemustech.instanthotspot;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,7 @@ public class InstantHotSpotService extends Service {
 
     private BluetoothManager bTManager;
     private BluetoothAdapter bTAdapter;
+    private BluetoothGattServer bTGattServer;
 
 
     @Override

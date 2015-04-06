@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.util.Log;
@@ -20,6 +21,13 @@ public class InstantHotSpotService extends Service {
     private BluetoothAdapter bTAdapter;
     private BluetoothGattServer bTGattServer;
 
+    private WifiManager wifiManager;
+    private Method setWifiApEnabled;
+    private Method getWifiApConfiguration;
+    private Method setWifiApConfiguration;
+    private Method isWifiApEnabled;
+
+    private InstantHotSpotGattServer gattServer;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -35,6 +43,11 @@ public class InstantHotSpotService extends Service {
         // initialize
         bTManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bTAdapter = bTManager.getAdapter();
+
+        initWifiMethods();
+
+        gattServer = new InstantHotSpotGattServer(this, bTManager, bTAdapter);
+        gattServer.startGattServer();
     }
 
     @Override
@@ -47,20 +60,36 @@ public class InstantHotSpotService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
+        if (gattServer != null) {
+            gattServer.startGattServer();
+            gattServer = null;
+        }
     }
 
-    private void setWifiTetheringEnabled(boolean enable) {
-        WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+    private void initWifiMethods() {
+        wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
 
         Method[] methods = wifiManager.getClass().getDeclaredMethods();
         for (Method method : methods) {
             if (method.getName().equals("setWifiApEnabled")) {
-                try {
-                    method.invoke(wifiManager, null, enable);
-                } catch (Exception ex) {
-                }
-                break;
+                setWifiApEnabled = method;
+            } else if (method.getName().equals("getWifiApConfiguration")) {
+                getWifiApConfiguration = method;
+            } else if (method.getName().equals("setWifiApConfiguration")) {
+                setWifiApConfiguration = method;
+            } else if (method.getName().equals("isWifiApEnabled")) {
+                isWifiApEnabled = method;
             }
         }
     }
+
+    void setWifiTetheringEnabled(boolean enable) {
+        try {
+            WifiConfiguration config = (WifiConfiguration) getWifiApConfiguration.invoke(wifiManager);
+            setWifiApEnabled.invoke(wifiManager, config, enable);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        };
+    }
+
 }

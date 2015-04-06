@@ -22,7 +22,7 @@ import java.util.UUID;
 public class InstantHotSpotGattServer {
     private static final String TAG = InstantHotSpotGattServer.class.getSimpleName();
 
-    static final UUID service_uuid = UUID.fromString("00001802-0000-1000-8000-00805f9b34fb");
+    static final UUID service_uuid = UUID.fromString("0000180F-0000-1000-8000-00805f9b34fb");
     static final UUID field1_characteristic_uuid = UUID.fromString("00002a06-0000-1000-8000-00805f9b34fb");
 
     private BluetoothManager bTManager;
@@ -53,8 +53,6 @@ public class InstantHotSpotGattServer {
                 Log.d(TAG, "onConnectionStateChange: " + device.getName() + " status=" + status + "->" + newState);
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     // if someone connects then we should stop BLE adv here
-                    // enable WiFi Ap
-                    ((InstantHotSpotService)context).setWifiTetheringEnabled(true);
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     // maybe need to clean up staff
                 }
@@ -76,6 +74,16 @@ public class InstantHotSpotGattServer {
             public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
                 Log.d(TAG, "onCharacteristicReadRequest: requestId=" + requestId + " offset=" + offset);
                 Log.d(TAG, "uuid: " + characteristic.getUuid().toString());
+                if (!characteristic.getService().getUuid().equals(service_uuid)) {
+                    Log.d(TAG, "Different service uuid ignored.");
+                    return;
+                }
+
+                characteristic.setValue("SUCCEEDED");
+                gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, characteristic.getValue());
+
+                // enable WiFi Ap
+                ((InstantHotSpotService)context).setWifiTetheringEnabled(true);
             }
         };
     }

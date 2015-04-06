@@ -116,7 +116,10 @@ public class MainActivity extends ActionBarActivity {
                     BluetoothGattService service = gatt.getService(InstantHotSpotGattServer.service_uuid);
                     if (service != null) {
                         Log.d(TAG, "Found Instant HotSpot service");
-                        gatt.disconnect();
+                        BluetoothGattCharacteristic characteristic = service.getCharacteristic(InstantHotSpotGattServer.field1_characteristic_uuid);
+                        if (characteristic != null) {
+                            gatt.readCharacteristic(characteristic);
+                        }
                     }
 
                 } else {
@@ -128,6 +131,11 @@ public class MainActivity extends ActionBarActivity {
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status)
             {
                 Log.d(TAG, "onCharacteristicRead: ");
+                if (characteristic.getUuid().equals(InstantHotSpotGattServer.field1_characteristic_uuid)) {
+                    String str = characteristic.getStringValue(0);
+                    Log.d(TAG, str);
+                    gatt.close();
+                }
             }
 
             @Override

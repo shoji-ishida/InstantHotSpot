@@ -205,6 +205,7 @@ public class MainActivity extends ActionBarActivity {
                     String str = characteristic.getStringValue(0);
                     Log.d(TAG, str);
                     ssid = str;
+                    gatt.disconnect();
                     gatt.close();
                     Timer timer = new Timer();
                     TimerTask task = new TimerTask() {

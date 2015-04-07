@@ -61,7 +61,7 @@ public class InstantHotSpotService extends Service {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
         if (gattServer != null) {
-            gattServer.startGattServer();
+            gattServer.stopGattServer();
             gattServer = null;
         }
     }

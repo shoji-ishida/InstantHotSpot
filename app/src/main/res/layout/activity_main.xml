@@ -49,4 +49,30 @@
         android:layout_alignEnd="@+id/textView"
         android:textSize="20dp" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Paring"
+        android:id="@+id/textView3"
+        android:layout_below="@+id/start"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="24dp"
+        android:textSize="20dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Host"
+        android:id="@+id/host"
+        android:layout_below="@+id/textView2"
+        android:layout_alignStart="@+id/start" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Client"
+        android:id="@+id/client"
+        android:layout_below="@+id/stop"
+        android:layout_toEndOf="@+id/start" />
+
 </RelativeLayout>

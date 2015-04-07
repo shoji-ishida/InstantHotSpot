@@ -30,6 +30,7 @@ public class InstantHotSpotGattServer {
     private BluetoothAdapter bTAdapter;
     private BluetoothGattServer gattServer;
     private BluetoothGattServerCallback gattCallback;
+    private BluetoothGattService gattService;
     private Context context;
 
     public InstantHotSpotGattServer(Context context, BluetoothManager manager, BluetoothAdapter adapter) {
@@ -65,6 +66,7 @@ public class InstantHotSpotGattServer {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.d(TAG, "onServiceAdded: status=GATT_SUCCESS service="
                             + service.getUuid().toString());
+                    gattService = service;
                 } else {
                     Log.d(TAG, "onServiceAdded: status!=GATT_SUCCESS");
                 }
@@ -113,7 +115,10 @@ public class InstantHotSpotGattServer {
 
     public void stopGattServer() {
         if (gattServer != null) {
-            gattServer.clearServices();
+            if (gattService != null) {
+                gattServer.removeService(gattService);
+                gattService = null;
+            }
             gattServer.close();
             gattServer = null;
         }

@@ -69,6 +69,7 @@ public class MainActivity extends ActionBarActivity {
     private WifiP2pManager p2pManager;
     private WifiP2pManager.Channel channel;
     private WifiP2pDnsSdServiceInfo service;
+    private BroadcastReceiver p2PReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -342,7 +343,7 @@ public class MainActivity extends ActionBarActivity {
         // registering multiple receivers causes multiple Intents to be
         // dispatched.
         // make sure single receiver is registered at a time
-        if (receiver == null) {
+        if (p2PReceiver == null) {
             IntentFilter intentFilter = new IntentFilter();
             intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
             intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -353,14 +354,14 @@ public class MainActivity extends ActionBarActivity {
                     .addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
             Log.d(TAG, "Broadcast receiver registered");
-            receiver = new WifiP2pBroadcastReceiver(p2pManager, channel, this);
-            registerReceiver(receiver, intentFilter);
+            p2PReceiver = new WifiP2pBroadcastReceiver(p2pManager, channel, this);
+            registerReceiver(p2PReceiver, intentFilter);
         }
     }
 
     void unregisterWifiP2pReceiver() {
-        if (receiver != null) {
-            unregisterReceiver(receiver);
+        if (p2PReceiver != null) {
+            unregisterReceiver(p2PReceiver);
         }
     }
 

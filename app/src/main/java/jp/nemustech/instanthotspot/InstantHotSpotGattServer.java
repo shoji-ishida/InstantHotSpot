@@ -21,9 +21,10 @@ import java.util.UUID;
  */
 public class InstantHotSpotGattServer {
     private static final String TAG = InstantHotSpotGattServer.class.getSimpleName();
+    public static final String DONE = "DONE";
 
     static final UUID service_uuid = UUID.fromString("0000180F-0000-1000-8000-00805f9b34fb");
-    static final UUID field1_characteristic_uuid = UUID.fromString("00002a06-0000-1000-8000-00805f9b34fb");
+    static final UUID field1_characteristic_uuid = UUID.fromString("00002a49-0000-1000-8000-00805f9b34fb");
 
     private BluetoothManager bTManager;
     private BluetoothAdapter bTAdapter;
@@ -79,7 +80,8 @@ public class InstantHotSpotGattServer {
                     return;
                 }
 
-                characteristic.setValue("SUCCEEDED");
+                String ssid = ((InstantHotSpotService)context).getWifiTetheringSSID();
+                characteristic.setValue(ssid);
                 gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, characteristic.getValue());
 
                 // enable WiFi Ap

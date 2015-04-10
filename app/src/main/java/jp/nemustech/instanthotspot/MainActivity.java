@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -48,7 +49,11 @@ public class MainActivity extends ActionBarActivity {
     private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
     private static final int REQUEST_ENABLE_BT = 3;
 
-    private static final String WifiApAddr = "F0:6B:CA:35:96:EC";
+    private static final int SCAN_DURATION = 30;
+
+    private static final String PREFS = "myprefs";
+    private static final String PREF_WIFIAPADDR = "WifiApAddr";
+    private String WifiApAddr = "F0:6B:CA:35:96:EC";
 
     private Button button;
     private Button start;
@@ -77,7 +82,8 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //registerWifiP2pReceiver();
+        SharedPreferences prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        WifiApAddr = prefs.getString(PREF_WIFIAPADDR, null);
 
         button = (Button)findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
@@ -172,6 +178,11 @@ public class MainActivity extends ActionBarActivity {
                     String address = data.getExtras()
                             .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                     Log.d(TAG, "Host addr = " + address);
+                    SharedPreferences prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString(PREF_WIFIAPADDR, address);
+                    editor.apply();
+                    WifiApAddr = address;
                 }
                 break;
             case REQUEST_ENABLE_BT:
@@ -311,7 +322,7 @@ public class MainActivity extends ActionBarActivity {
         if (bTAdapter.getScanMode() !=
                 BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
             Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, SCAN_DURATION);
             startActivity(discoverableIntent);
         }
     }

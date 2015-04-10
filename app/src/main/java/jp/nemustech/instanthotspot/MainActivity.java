@@ -72,11 +72,6 @@ public class MainActivity extends ActionBarActivity {
     private String ssid;
     private BroadcastReceiver receiver;
 
-    private WifiP2pManager p2pManager;
-    private WifiP2pManager.Channel channel;
-    private WifiP2pDnsSdServiceInfo service;
-    private BroadcastReceiver p2PReceiver;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,8 +84,27 @@ public class MainActivity extends ActionBarActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                BluetoothDevice device = bTAdapter.getRemoteDevice(WifiApAddr);
-                bluetoothGatt = device.connectGatt(MainActivity.this, false, gattCallback);
+                manager = (WifiManager)getSystemService(WIFI_SERVICE);
+                if (!manager.isWifiEnabled()) {
+                    manager.setWifiEnabled(true);
+                }
+                if (WifiApAddr == null) {
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                    alertDialogBuilder.setTitle(R.string.none_paired);
+                    alertDialogBuilder.setMessage(R.string.ask_pairing);
+                    alertDialogBuilder.setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            return;
+                        }
+                    });
+                    AlertDialog dialog = alertDialogBuilder.create();
+                    dialog.show();
+                } else {
+                    BluetoothDevice device = bTAdapter.getRemoteDevice(WifiApAddr);
+                    bluetoothGatt = device.connectGatt(MainActivity.this, false, gattCallback);
+                }
             }
         });
 
@@ -299,7 +313,8 @@ public class MainActivity extends ActionBarActivity {
                 for (WifiConfiguration config: configs) {
                     Log.d(TAG, "Configed SSID = " + config.SSID);
                     if (config.SSID.equals("\""+ssid+"\"")) {
-                        manager.enableNetwork(config.networkId, true);
+                        boolean state =manager.enableNetwork(config.networkId, true);
+                        Log.d(TAG, "state = " + state);
                         finish();
                         break;
                     }

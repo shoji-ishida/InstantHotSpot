@@ -53,7 +53,7 @@ public class MainActivity extends ActionBarActivity {
 
     private static final String PREFS = "myprefs";
     private static final String PREF_WIFIAPADDR = "WifiApAddr";
-    private String WifiApAddr = "F0:6B:CA:35:96:EC";
+    private String WifiApAddr = null;
 
     private Button button;
     private Button start;
@@ -70,6 +70,7 @@ public class MainActivity extends ActionBarActivity {
 
     private WifiManager manager;
     private String ssid;
+    private String sharedKey;
     private BroadcastReceiver receiver;
 
     @Override
@@ -304,6 +305,7 @@ public class MainActivity extends ActionBarActivity {
 
     private void connectWifi() {
         boolean found = false;
+        boolean registered = false;
         List<ScanResult> results = manager.getScanResults();
         for (ScanResult result: results) {
             Log.d(TAG, "SSID = " + result.SSID);
@@ -315,6 +317,7 @@ public class MainActivity extends ActionBarActivity {
                     if (config.SSID.equals("\""+ssid+"\"")) {
                         boolean state =manager.enableNetwork(config.networkId, true);
                         Log.d(TAG, "state = " + state);
+                        registered = true;
                         finish();
                         break;
                     }
@@ -329,7 +332,13 @@ public class MainActivity extends ActionBarActivity {
                 e.printStackTrace();
             }
             scanWifi();
+        } if (!registered) {
+            registerWifiAp();
         }
+    }
+
+    private void registerWifiAp() {
+
     }
 
     private void ensureDiscoverable() {

@@ -87,9 +87,18 @@ public class InstantHotSpotService extends Service {
         try {
             WifiConfiguration config = (WifiConfiguration) getWifiApConfiguration.invoke(wifiManager);
             Log.d(TAG, "SSID = " + config.SSID);
-            Log.d(TAG, "preSharedKey = " + config.preSharedKey);
-            Log.d(TAG, "Wep keys = " + config.wepKeys);
             return config.SSID;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    String getWifiTetheringPreSharedKey() {
+        try {
+            WifiConfiguration config = (WifiConfiguration) getWifiApConfiguration.invoke(wifiManager);
+            Log.d(TAG, "preSharedKey = " + config.preSharedKey);
+            return config.preSharedKey;
         } catch (Exception e) {
             e.printStackTrace();
         }

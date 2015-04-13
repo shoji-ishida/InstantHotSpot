@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -70,7 +71,7 @@ public class MainActivity extends ActionBarActivity {
 
     private WifiManager manager;
     private String ssid;
-    private String sharedKey;
+    private String preSharedKey;
     private BroadcastReceiver receiver;
 
     @Override
@@ -257,22 +258,36 @@ public class MainActivity extends ActionBarActivity {
                     String str = characteristic.getStringValue(0);
                     Log.d(TAG, str);
                     ssid = str;
-                    gatt.disconnect();
-                    gatt.close();
-                    Timer timer = new Timer();
-                    TimerTask task = new TimerTask() {
-                        @Override
-                        public void run() {
-                            scanWifi();
-                        }
-                    };
-                    timer.schedule(task, SCAN_DELAY);
+                    if (!isWifiApConfigured()) {
+                        readCharacteristics(gatt, InstantHotSpotGattServer.field2_characteristic_uuid);
+                    } else {
+                        gatt.writeCharacteristic(characteristic);
+                    }
+                } else if (characteristic.getUuid().equals(InstantHotSpotGattServer.field2_characteristic_uuid)) {
+                    String str = characteristic.getStringValue(0);
+                    preSharedKey = "\""+str+"\"";
+                    registerWifiAp();
+                    BluetoothGattService service = gatt.getService(InstantHotSpotGattServer.service_uuid);
+                    if (service != null) {
+                        characteristic = service.getCharacteristic(InstantHotSpotGattServer.field1_characteristic_uuid);
+                        gatt.writeCharacteristic(characteristic);
+                    }
                 }
             }
 
             @Override
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 Log.d(TAG, "onCharacteristicWrite: " + status + ", " + characteristic.getStringValue(0));
+                gatt.disconnect();
+                gatt.close();
+                Timer timer = new Timer();
+                TimerTask task = new TimerTask() {
+                    @Override
+                    public void run() {
+                        scanWifi();
+                    }
+                };
+                timer.schedule(task, SCAN_DELAY);
             }
 
             @Override
@@ -280,6 +295,18 @@ public class MainActivity extends ActionBarActivity {
                 Log.d(TAG, "onCharacteristicChanged: ");
             }
         };
+    }
+
+    private void readCharacteristics(BluetoothGatt gatt, UUID uuid) {
+        BluetoothGattService service = gatt.getService(InstantHotSpotGattServer.service_uuid);
+        if (service != null) {
+            BluetoothGattCharacteristic characteristic = service.getCharacteristic(uuid);
+            if (characteristic != null) {
+                gatt.readCharacteristic(characteristic);
+            } else {
+                Log.d(TAG, "Specified UUID " + uuid.toString() + " does not exist");
+            }
+        }
     }
 
     private void scanWifi() {
@@ -303,9 +330,18 @@ public class MainActivity extends ActionBarActivity {
         manager.startScan();
     }
 
+    private boolean isWifiApConfigured() {
+        List<WifiConfiguration> configs = manager.getConfiguredNetworks();
+        for (WifiConfiguration config: configs) {
+            if (config.SSID.equals("\""+ssid+"\"")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void connectWifi() {
         boolean found = false;
-        boolean registered = false;
         List<ScanResult> results = manager.getScanResults();
         for (ScanResult result: results) {
             Log.d(TAG, "SSID = " + result.SSID);
@@ -315,9 +351,8 @@ public class MainActivity extends ActionBarActivity {
                 for (WifiConfiguration config: configs) {
                     Log.d(TAG, "Configed SSID = " + config.SSID);
                     if (config.SSID.equals("\""+ssid+"\"")) {
-                        boolean state =manager.enableNetwork(config.networkId, true);
+                        boolean state = manager.enableNetwork(config.networkId, true);
                         Log.d(TAG, "state = " + state);
-                        registered = true;
                         finish();
                         break;
                     }
@@ -332,13 +367,26 @@ public class MainActivity extends ActionBarActivity {
                 e.printStackTrace();
             }
             scanWifi();
-        } if (!registered) {
-            registerWifiAp();
         }
     }
 
     private void registerWifiAp() {
-
+        WifiConfiguration config = new WifiConfiguration();
+        config.SSID = "\""+ssid+"\"";
+        config.preSharedKey = preSharedKey;
+        config.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+        config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+        config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+        config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+        config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+        config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+        config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+        config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+        config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+        int netId = manager.addNetwork(config);
+        if (netId == -1) {
+            Log.d(TAG, "failed to add WifiConfig");
+        }
     }
 
     private void ensureDiscoverable() {

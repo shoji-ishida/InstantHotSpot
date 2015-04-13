@@ -21,10 +21,11 @@ import java.util.UUID;
  */
 public class InstantHotSpotGattServer {
     private static final String TAG = InstantHotSpotGattServer.class.getSimpleName();
-    public static final String DONE = "DONE";
+    //public static final String DONE = "DONE";
 
     static final UUID service_uuid = UUID.fromString("0000180F-0000-1000-8000-00805f9b34fb");
     static final UUID field1_characteristic_uuid = UUID.fromString("00002a49-0000-1000-8000-00805f9b34fb");
+    static final UUID field2_characteristic_uuid = UUID.fromString("00002a59-0000-1000-8000-00805f9b34fb");
 
     private BluetoothManager bTManager;
     private BluetoothAdapter bTAdapter;
@@ -81,13 +82,24 @@ public class InstantHotSpotGattServer {
                     Log.d(TAG, "Different service uuid ignored.");
                     return;
                 }
-
-                String ssid = ((InstantHotSpotService)context).getWifiTetheringSSID();
-                characteristic.setValue(ssid);
+                String value = null;
+                if (characteristic.getUuid().equals(field1_characteristic_uuid)) {
+                    value = ((InstantHotSpotService) context).getWifiTetheringSSID();
+                } else if (characteristic.getUuid().equals(field2_characteristic_uuid)) {
+                    value = ((InstantHotSpotService) context).getWifiTetheringPreSharedKey();
+                } else {
+                    Log.d(TAG, "Unknown characteristic");
+                    return;
+                }
+                characteristic.setValue(value);
                 gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, characteristic.getValue());
+            }
 
+            @Override
+            public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
                 // enable WiFi Ap
                 ((InstantHotSpotService)context).setWifiTetheringEnabled(true);
+                gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, null);
             }
         };
     }
@@ -105,11 +117,17 @@ public class InstantHotSpotGattServer {
         );
 
         BluetoothGattCharacteristic gc1 = new BluetoothGattCharacteristic(
-                field1_characteristic_uuid, BluetoothGattCharacteristic.PROPERTY_READ|BluetoothGattCharacteristic.PROPERTY_NOTIFY|BluetoothGattCharacteristic.PROPERTY_WRITE,
+                field1_characteristic_uuid, BluetoothGattCharacteristic.PROPERTY_READ|BluetoothGattCharacteristic.PROPERTY_WRITE,
                 BluetoothGattCharacteristic.PERMISSION_READ|BluetoothGattCharacteristic.PERMISSION_WRITE
         );
 
+        BluetoothGattCharacteristic gc2 = new BluetoothGattCharacteristic(
+                field2_characteristic_uuid, BluetoothGattCharacteristic.PROPERTY_READ,
+                BluetoothGattCharacteristic.PERMISSION_READ
+        );
+
         gs.addCharacteristic(gc1);
+        gs.addCharacteristic(gc2);
         gattServer.addService(gs);
     }
 

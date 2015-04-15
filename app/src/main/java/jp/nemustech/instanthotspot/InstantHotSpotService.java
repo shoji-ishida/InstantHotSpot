@@ -107,6 +107,11 @@ public class InstantHotSpotService extends Service {
 
     void setWifiTetheringEnabled(boolean enable) {
         try {
+            // Galaxy disables Wifi before enabling WifiAP automatically while other mostly does not.
+            // so turn off Wifi for sure
+            if (!wifiManager.isWifiEnabled()) {
+                wifiManager.setWifiEnabled(false);
+            }
             WifiConfiguration config = (WifiConfiguration) getWifiApConfiguration.invoke(wifiManager);
             setWifiApEnabled.invoke(wifiManager, config, enable);
         } catch (Exception ex) {

@@ -97,6 +97,7 @@ public class InstantHotSpotGattServer {
 
             @Override
             public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
+                Log.d(TAG, "onCharacteristicWriteRequest:");
                 // enable WiFi Ap
                 ((InstantHotSpotService)context).setWifiTetheringEnabled(true);
                 gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, null);

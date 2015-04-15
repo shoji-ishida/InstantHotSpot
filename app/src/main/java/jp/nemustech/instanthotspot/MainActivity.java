@@ -261,6 +261,7 @@ public class MainActivity extends ActionBarActivity {
                     if (!isWifiApConfigured()) {
                         readCharacteristics(gatt, InstantHotSpotGattServer.field2_characteristic_uuid);
                     } else {
+                        characteristic.setValue("GO");
                         gatt.writeCharacteristic(characteristic);
                     }
                 } else if (characteristic.getUuid().equals(InstantHotSpotGattServer.field2_characteristic_uuid)) {
@@ -270,6 +271,7 @@ public class MainActivity extends ActionBarActivity {
                     BluetoothGattService service = gatt.getService(InstantHotSpotGattServer.service_uuid);
                     if (service != null) {
                         characteristic = service.getCharacteristic(InstantHotSpotGattServer.field1_characteristic_uuid);
+                        characteristic.setValue("GO");
                         gatt.writeCharacteristic(characteristic);
                     }
                 }

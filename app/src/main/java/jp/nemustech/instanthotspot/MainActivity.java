@@ -74,6 +74,8 @@ public class MainActivity extends ActionBarActivity {
     private String preSharedKey;
     private BroadcastReceiver receiver;
 
+    private int scanCount = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -286,6 +288,7 @@ public class MainActivity extends ActionBarActivity {
                 TimerTask task = new TimerTask() {
                     @Override
                     public void run() {
+                        scanCount = 0;
                         scanWifi();
                     }
                 };
@@ -330,6 +333,7 @@ public class MainActivity extends ActionBarActivity {
         registerReceiver(receiver, filter);
 
         manager.startScan();
+        scanCount++;
     }
 
     private boolean isWifiApConfigured() {
@@ -362,7 +366,7 @@ public class MainActivity extends ActionBarActivity {
                 break;
             }
         }
-        if (!found) {
+        if (!found && scanCount < 6) {
             try {
                 Thread.sleep(SCAN_DELAY);
             } catch (InterruptedException e) {

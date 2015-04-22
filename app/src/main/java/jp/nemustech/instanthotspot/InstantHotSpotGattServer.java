@@ -67,7 +67,9 @@ public class InstantHotSpotGattServer {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.d(TAG, "onServiceAdded: status=GATT_SUCCESS service="
                             + service.getUuid().toString());
-                    gattService = service;
+                    if (service.getUuid().equals(service_uuid)) {
+                        gattService = service;
+                    }
                 } else {
                     Log.d(TAG, "onServiceAdded: status!=GATT_SUCCESS");
                 }

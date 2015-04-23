@@ -23,7 +23,7 @@ public class InstantHotSpotGattServer {
     private static final String TAG = InstantHotSpotGattServer.class.getSimpleName();
     //public static final String DONE = "DONE";
 
-    static final UUID service_uuid = UUID.fromString("0000180F-0000-1000-8000-00805f9b34fb");
+    static final UUID service_uuid = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
     static final UUID field1_characteristic_uuid = UUID.fromString("00002a49-0000-1000-8000-00805f9b34fb");
     static final UUID field2_characteristic_uuid = UUID.fromString("00002a59-0000-1000-8000-00805f9b34fb");
 
@@ -69,6 +69,8 @@ public class InstantHotSpotGattServer {
                             + service.getUuid().toString());
                     if (service.getUuid().equals(service_uuid)) {
                         gattService = service;
+                    } else {
+                        Log.d(TAG, "no target service available");
                     }
                 } else {
                     Log.d(TAG, "onServiceAdded: status!=GATT_SUCCESS");
@@ -140,6 +142,7 @@ public class InstantHotSpotGattServer {
                 gattServer.removeService(gattService);
                 gattService = null;
             }
+            Log.d(TAG, "Closing Gatt server");
             gattServer.close();
             gattServer = null;
         }

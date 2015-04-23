@@ -16,4 +16,8 @@
 
     <string name="ask_pairing">Pair with a host device which supplies Tethering.</string>
     <string name="confirm">Confirm</string>
+    <string name="connecting">Connecting....</string>
+    <string name="scanning_wifi">Scanning wifi</string>
+    <string name="connecting_wifi">Connecting to Wifi</string>
+    <string name="not_available">Instant Tethering not available</string>
 </resources>

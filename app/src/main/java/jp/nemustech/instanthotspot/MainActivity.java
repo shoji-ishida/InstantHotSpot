@@ -32,6 +32,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +45,7 @@ import java.util.UUID;
 public class MainActivity extends ActionBarActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int SCAN_DELAY = 1000;
+    private static final int SCAN_COUNT = 6;
 
     // Intent request codes
     private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
@@ -107,6 +109,7 @@ public class MainActivity extends ActionBarActivity {
                     dialog.show();
                 } else {
                     BluetoothDevice device = bTAdapter.getRemoteDevice(WifiApAddr);
+                    Toast.makeText(MainActivity.this, R.string.connecting, Toast.LENGTH_LONG).show();
                     bluetoothGatt = device.connectGatt(MainActivity.this, false, gattCallback);
                 }
             }
@@ -243,8 +246,19 @@ public class MainActivity extends ActionBarActivity {
                         Log.d(TAG, "Found Instant HotSpot service");
                         BluetoothGattCharacteristic characteristic = service.getCharacteristic(InstantHotSpotGattServer.field1_characteristic_uuid);
                         if (characteristic != null) {
-                            gatt.readCharacteristic(characteristic);
+                            boolean ret = gatt.readCharacteristic(characteristic);
+                            if (!ret) {
+                                Log.d(TAG, "Reading characteristic failed: " + characteristic);
+                            }
                         }
+                    } else {
+                        Log.d(TAG, "Instant HotSpot not available");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this, R.string.not_available, Toast.LENGTH_LONG).show();
+                            }
+                        });
                     }
 
                 } else {
@@ -261,10 +275,14 @@ public class MainActivity extends ActionBarActivity {
                     Log.d(TAG, str);
                     ssid = str;
                     if (!isWifiApConfigured()) {
+                        // if WiFi Ap is not configured read PreShared Key and configure WiFi Ap to connect to
                         readCharacteristics(gatt, InstantHotSpotGattServer.field2_characteristic_uuid);
                     } else {
                         characteristic.setValue("GO");
-                        gatt.writeCharacteristic(characteristic);
+                        boolean ret = gatt.writeCharacteristic(characteristic);
+                        if (!ret) {
+                            Log.d(TAG, "Writing characteristic failed: " + characteristic);
+                        }
                     }
                 } else if (characteristic.getUuid().equals(InstantHotSpotGattServer.field2_characteristic_uuid)) {
                     String str = characteristic.getStringValue(0);
@@ -274,7 +292,10 @@ public class MainActivity extends ActionBarActivity {
                     if (service != null) {
                         characteristic = service.getCharacteristic(InstantHotSpotGattServer.field1_characteristic_uuid);
                         characteristic.setValue("GO");
-                        gatt.writeCharacteristic(characteristic);
+                        boolean ret = gatt.writeCharacteristic(characteristic);
+                        if (!ret) {
+                            Log.d(TAG, "Writing characteristic failed: " + characteristic);
+                        }
                     }
                 }
             }
@@ -282,6 +303,7 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 Log.d(TAG, "onCharacteristicWrite: " + status + ", " + characteristic.getStringValue(0));
+                Log.d(TAG, "Closing Gatt");
                 gatt.disconnect();
                 gatt.close();
                 Timer timer = new Timer();
@@ -307,7 +329,10 @@ public class MainActivity extends ActionBarActivity {
         if (service != null) {
             BluetoothGattCharacteristic characteristic = service.getCharacteristic(uuid);
             if (characteristic != null) {
-                gatt.readCharacteristic(characteristic);
+                boolean ret = gatt.readCharacteristic(characteristic);
+                if (!ret) {
+                    Log.d(TAG, "Read characteristic failed: " + characteristic);
+                }
             } else {
                 Log.d(TAG, "Specified UUID " + uuid.toString() + " does not exist");
             }
@@ -332,12 +357,20 @@ public class MainActivity extends ActionBarActivity {
         filter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         registerReceiver(receiver, filter);
 
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, R.string.scanning_wifi, Toast.LENGTH_LONG).show();
+            }
+        });
+
         manager.startScan();
         scanCount++;
     }
 
     private boolean isWifiApConfigured() {
         List<WifiConfiguration> configs = manager.getConfiguredNetworks();
+        // verify if WiFi Ap has already been configured
         for (WifiConfiguration config: configs) {
             if (config.SSID.equals("\""+ssid+"\"")) {
                 return true;
@@ -355,8 +388,15 @@ public class MainActivity extends ActionBarActivity {
                 found = true;
                 List<WifiConfiguration> configs = manager.getConfiguredNetworks();
                 for (WifiConfiguration config: configs) {
-                    Log.d(TAG, "Configed SSID = " + config.SSID);
+                    Log.d(TAG, "Configured SSID = " + config.SSID);
                     if (config.SSID.equals("\""+ssid+"\"")) {
+                        runOnUiThread(new Runnable() {
+                                          @Override
+                                          public void run() {
+                                              Toast.makeText(MainActivity.this, R.string.connecting_wifi, Toast.LENGTH_LONG).show();
+
+                                          }
+                                      });
                         boolean state = manager.enableNetwork(config.networkId, true);
                         Log.d(TAG, "state = " + state);
                         finish();
@@ -366,7 +406,7 @@ public class MainActivity extends ActionBarActivity {
                 break;
             }
         }
-        if (!found && scanCount < 6) {
+        if (!found && scanCount < SCAN_COUNT) {
             try {
                 Thread.sleep(SCAN_DELAY);
             } catch (InterruptedException e) {

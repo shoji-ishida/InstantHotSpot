@@ -106,6 +106,7 @@ public class InstantHotSpotService extends Service {
     }
 
     void setWifiTetheringEnabled(boolean enable) {
+        Log.d(TAG, "setWifiTetheringEnabled");
         try {
             // Galaxy disables Wifi before enabling WifiAP automatically while other mostly does not.
             // so turn off Wifi for sure

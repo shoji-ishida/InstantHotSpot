@@ -269,7 +269,7 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status)
             {
-                Log.d(TAG, "onCharacteristicRead: ");
+                Log.d(TAG, "onCharacteristicRead: status = "+ status);
                 if (characteristic.getUuid().equals(InstantHotSpotGattServer.field1_characteristic_uuid)) {
                     String str = characteristic.getStringValue(0);
                     Log.d(TAG, str);
